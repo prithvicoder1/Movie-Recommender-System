@@ -1,4 +1,3 @@
-import numpy as np
 import pandas as pd
 import ast
 from sklearn.feature_extraction.text import CountVectorizer
@@ -17,7 +16,7 @@ credits = pd.read_csv(credits_csv)
 
 print("Merging data...")
 movies = movies.merge(credits, on='title')
-movies = movies[['movie_id', 'title', 'overview', 'genres', 'keywords', 'cast', 'crew']]
+movies = movies[['movie_id', 'title', 'overview', 'genres', 'keywords', 'cast', 'crew', 'vote_average']]
 
 movies.dropna(inplace=True)
 
@@ -43,7 +42,9 @@ def fetch_director(text):
     return L 
 
 movies['crew'] = movies['crew'].apply(fetch_director)
-movies['overview'] = movies['overview'].apply(lambda x: x.split())
+
+# Create a copy of overview for tags processing
+movies['overview_list'] = movies['overview'].apply(lambda x: x.split())
 
 def collapse(L):
     L1 = []
@@ -56,9 +57,9 @@ movies['crew'] = movies['crew'].apply(collapse)
 movies['genres'] = movies['genres'].apply(collapse)
 movies['keywords'] = movies['keywords'].apply(collapse)
 
-movies['tags'] = movies['overview'] + movies['genres'] + movies['keywords'] + movies['cast'] + movies['crew']
+movies['tags'] = movies['overview_list'] + movies['genres'] + movies['keywords'] + movies['cast'] + movies['crew']
 
-new = movies.drop(columns=['overview', 'genres', 'keywords', 'cast', 'crew'])
+new = movies.drop(columns=['overview_list', 'genres', 'keywords', 'cast', 'crew'])
 new['tags'] = new['tags'].apply(lambda x: " ".join(x))
 
 print("Vectorizing...")
