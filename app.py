@@ -1,4 +1,9 @@
+import os
 import pickle
+import subprocess
+import sys
+from pathlib import Path
+
 import streamlit as st
 import requests
 
@@ -128,8 +133,26 @@ st.markdown("""
 
 st.markdown("<h1 class='netflix-header'>Movie Recommender System</h1>", unsafe_allow_html=True)
 
-movies = pickle.load(open('model/movie_list.pkl','rb'))
-similarity = pickle.load(open('model/similarity.pkl','rb'))
+base_dir = Path(__file__).resolve().parent
+model_dir = base_dir / "model"
+movie_list_path = model_dir / "movie_list.pkl"
+similarity_path = model_dir / "similarity.pkl"
+
+if not movie_list_path.exists() or not similarity_path.exists():
+    try:
+        subprocess.run(
+            [sys.executable, str(base_dir / "generate_model.py")],
+            check=True,
+            cwd=str(base_dir),
+        )
+    except Exception as e:
+        st.error("Failed to generate recommendation model files. Please try again later.")
+        st.stop()
+
+with movie_list_path.open("rb") as f:
+    movies = pickle.load(f)
+with similarity_path.open("rb") as f:
+    similarity = pickle.load(f)
 
 movie_list = movies['title'].values
 selected_movie = st.selectbox(
@@ -157,3 +180,14 @@ if st.button('Show Recommendation', help="Click to find similar movies"):
         with col5:
             st.image(recommended_movie_posters[4], use_container_width=True)
             st.markdown(f"<p class='movie-title'>{recommended_movie_names[4]}</p>", unsafe_allow_html=True)
+
+if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 5000))
+    os.environ["STREAMLIT_SERVER_PORT"] = str(port)
+    os.environ["STREAMLIT_SERVER_ADDRESS"] = "0.0.0.0"
+    os.environ.setdefault("STREAMLIT_SERVER_HEADLESS", "true")
+
+    import streamlit.web.cli as stcli
+
+    sys.argv = ["streamlit", "run", __file__]
+    stcli.main()
