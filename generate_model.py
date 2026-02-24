@@ -6,9 +6,14 @@ from sklearn.metrics.pairwise import cosine_similarity
 import pickle
 import os
 
+base_dir = os.path.dirname(os.path.abspath(__file__))
+movies_csv = os.path.join(base_dir, "tmdb_5000_movies.csv")
+credits_csv = os.path.join(base_dir, "tmdb_5000_credits.csv")
+model_dir = os.path.join(base_dir, "model")
+
 print("Loading data...")
-movies = pd.read_csv('tmdb_5000_movies.csv')
-credits = pd.read_csv('tmdb_5000_credits.csv') 
+movies = pd.read_csv(movies_csv)
+credits = pd.read_csv(credits_csv)
 
 print("Merging data...")
 movies = movies.merge(credits, on='title')
@@ -64,7 +69,7 @@ print("Calculating similarity...")
 similarity = cosine_similarity(vector)
 
 print("Exporting to pickle...")
-os.makedirs('model', exist_ok=True)
-pickle.dump(new, open('model/movie_list.pkl', 'wb'))
-pickle.dump(similarity, open('model/similarity.pkl', 'wb'))
+os.makedirs(model_dir, exist_ok=True)
+pickle.dump(new, open(os.path.join(model_dir, "movie_list.pkl"), 'wb'))
+pickle.dump(similarity, open(os.path.join(model_dir, "similarity.pkl"), 'wb'))
 print("Done!")
