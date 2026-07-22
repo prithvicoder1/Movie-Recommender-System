@@ -1,221 +1,144 @@
 <div align="center">
 
-# 🍿 Movie Recommender System
+# 🎬 CineMatch
 
-### Discover your next favourite movie — instantly.
+### A polished, story-first movie recommendation experience.
 
-[![Python](https://img.shields.io/badge/Python-3.10+-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://python.org)
-[![Streamlit](https://img.shields.io/badge/Streamlit-FF4B4B?style=for-the-badge&logo=streamlit&logoColor=white)](https://streamlit.io)
-[![scikit-learn](https://img.shields.io/badge/scikit--learn-F7931E?style=for-the-badge&logo=scikit-learn&logoColor=white)](https://scikit-learn.org)
-[![TMDB](https://img.shields.io/badge/TMDB_API-01D277?style=for-the-badge&logo=themoviedatabase&logoColor=white)](https://www.themoviedb.org/)
-[![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)](LICENSE)
-[![Stars](https://img.shields.io/github/stars/prithvicoder1/Movie-Recommender-System?style=for-the-badge&color=yellow)](https://github.com/prithvicoder1/Movie-Recommender-System/stargazers)
+[![Python](https://img.shields.io/badge/Python-3.10+-3776AB?style=flat-square&logo=python&logoColor=white)](https://python.org)
+[![Streamlit](https://img.shields.io/badge/Streamlit-1.37+-FF4B4B?style=flat-square&logo=streamlit&logoColor=white)](https://streamlit.io)
+[![scikit-learn](https://img.shields.io/badge/scikit--learn-TF--IDF-F7931E?style=flat-square&logo=scikitlearn&logoColor=white)](https://scikit-learn.org)
+[![TMDB](https://img.shields.io/badge/TMDB-optional_live_artwork-01B4E4?style=flat-square)](https://www.themoviedb.org/)
 
-<br/>
-
-> A content-based movie recommendation engine that suggests 5 similar movies based on your selection, complete with live posters fetched from the TMDB API — all wrapped in a sleek Netflix-inspired UI.
-
-<br/>
-
-![Demo Banner](assets/demo.png)
+Search the complete bundled catalogue and get 5–20 recommendations that share
+a movie's themes, genres, cast, and creative DNA. The recommendation engine runs
+locally; TMDB credentials securely enable live posters and wide hero banners.
 
 </div>
 
----
+## What changed
 
-## 📌 Table of Contents
+- Full-catalogue search across 4,800 unique movies by title, original title,
+  genre, and story metadata—no small curated search subset.
+- Adjustable recommendation depth: 5, 10, 15, or 20 ranked movies.
+- A cinematic, responsive interface with quick picks, detailed ratings,
+  high-resolution poster cards, and a backdrop-style selected-movie banner.
+- A self-contained TF-IDF recommendation index built from the included data, so
+  the project no longer depends on a missing `similarity.pkl` file.
+- Secure TMDB configuration through Streamlit secrets or environment variables.
+  No API key is stored in the repository.
+- TMDB ID lookup plus a title/year recovery lookup when older records lack art.
+- A graceful local mode with generated title art when TMDB is not configured.
+- Cached, concurrent artwork requests for fast repeat interactions.
+- Separated catalogue, recommendation, artwork, presentation, and styling
+  modules with regression tests for the core behavior.
 
-- [About the Project](#-about-the-project)
-- [Live Demo](#-live-demo)
-- [Features](#-features)
-- [Tech Stack](#-tech-stack)
-- [How It Works](#-how-it-works)
-- [Project Structure](#-project-structure)
-- [Getting Started](#-getting-started)
-- [Screenshots](#-screenshots)
-- [Contributing](#-contributing)
-- [License](#-license)
+## How it works
 
----
+1. The app loads 4,800 unique tagged movies from `movie_list.pkl`.
+2. The search service ranks matches from the complete local catalogue.
+3. `TfidfVectorizer` converts movie tags into a sparse feature matrix.
+4. A query-time cosine comparison ranks up to 20 closest titles.
+5. Local CSV metadata supplies year, runtime, rating, genres, and overview.
+6. If configured, TMDB supplies live posters and wide backdrops.
 
-## 🎬 About the Project
+This keeps startup lightweight and avoids committing a large dense similarity
+matrix to Git.
 
-**Movie Recommender System** is a machine learning web app that takes a movie you love and instantly recommends 5 similar titles — each displayed with its official poster fetched live from The Movie Database (TMDB) API.
-
-The engine is built on **content-based filtering** using cosine similarity across movie metadata (genres, cast, crew, keywords, and overview). No user history or login required — just pick a movie and go.
-
----
-
-## ✨ Features
-
-- 🔍 **Smart search** — type or select any movie from 5,000+ titles
-- 🎯 **Content-based recommendations** — powered by cosine similarity on TF-IDF vectors
-- 🖼️ **Live posters** — real-time poster fetching via the TMDB API
-- 🎨 **Netflix-inspired UI** — dark theme, red accents, hover animations
-- ⚡ **Fast inference** — pre-computed similarity matrix loaded from `.pkl` for instant results
-- 📦 **Dockerized** — ready to containerise and deploy anywhere
-
----
-
-## 🛠️ Tech Stack
-
-| Layer | Tools |
-|---|---|
-| **Language** | Python 3.10+ |
-| **Web App** | Streamlit |
-| **ML / NLP** | scikit-learn, pandas, NumPy |
-| **Similarity** | Cosine Similarity on Count Vectors |
-| **Poster API** | TMDB REST API |
-| **Model Storage** | Pickle (`.pkl`) |
-| **Containerisation** | Docker |
-| **Version Control** | Git, GitHub |
-
----
-
-## 🧠 How It Works
-
-```
-User selects a movie
-        │
-        ▼
- Look up movie index in DataFrame
-        │
-        ▼
- Retrieve pre-computed cosine similarity row
-        │
-        ▼
- Sort all movies by similarity score (descending)
-        │
-        ▼
- Pick top 5 results (excluding the selected movie)
-        │
-        ▼
- Fetch poster for each via TMDB API
-        │
-        ▼
- Display titles + posters in a 5-column Streamlit layout
-```
-
-The similarity matrix is built from a **Bag of Words** representation of combined movie tags (overview + genres + keywords + cast + director), vectorised with `CountVectorizer` and measured with **cosine similarity**.
-
----
-
-## 📂 Project Structure
-
-```
-Movie-Recommender-System/
-│
-├── 📁 model/
-│   └── movie_list.pkl          # Preprocessed movie DataFrame
-│
-├── 📁 templates/               # HTML templates (if any)
-├── 📁 myenv/                   # Virtual environment (excluded from git)
-│
-├── 🐍 app.py                   # Main Streamlit application
-├── 🐍 generate_model.py        # Script to build similarity matrix
-├── 📦 similarity.pkl           # Pre-computed cosine similarity matrix
-├── 📦 movie_list.pkl           # Movie metadata
-├── 📋 requirements.txt         # Python dependencies
-├── 🐳 Dockerfile               # Docker configuration
-├── ⚙️  setup.sh                # Setup script
-├── 📓 notebook86c26b4f...      # Jupyter EDA notebook
-└── 📄 README.md
-```
-
----
-
-## ⚙️ Getting Started
-
-### Prerequisites
-
-- Python 3.10+
-- A free [TMDB API key](https://www.themoviedb.org/settings/api)
-
-### 1. Clone the repository
+## Run locally
 
 ```bash
 git clone https://github.com/prithvicoder1/Movie-Recommender-System.git
 cd Movie-Recommender-System
-```
 
-### 2. Create and activate a virtual environment
-
-```bash
-python -m venv myenv
-source myenv/bin/activate        # Windows: myenv\Scripts\activate
-```
-
-### 3. Install dependencies
-
-```bash
+python -m venv .venv
+source .venv/bin/activate            # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
-```
 
-### 4. Add your TMDB API key
-
-Open `app.py` and replace the API key in `fetch_poster()`:
-
-```python
-url = f"https://api.themoviedb.org/3/movie/{movie_id}?api_key=YOUR_API_KEY&language=en-US"
-```
-
-### 5. Generate the model (if `.pkl` files are missing)
-
-```bash
-python generate_model.py
-```
-
-### 6. Run the app
-
-```bash
 streamlit run app.py
 ```
 
-Then open **http://localhost:8501** in your browser.
+Open [http://localhost:8501](http://localhost:8501). Search and recommendations
+work immediately without an external API; local title artwork is used until a
+TMDB credential is configured.
 
----
+## Enable TMDB artwork securely
 
-### 🐳 Docker (optional)
+Create a free API credential from [TMDB account settings](https://www.themoviedb.org/settings/api).
+The read access token is preferred over embedding a v3 key in a request URL.
+
+### Streamlit secrets
 
 ```bash
-docker build -t movie-recommender .
-docker run -p 8501:8501 movie-recommender
+cp .streamlit/secrets.toml.example .streamlit/secrets.toml
 ```
 
----
+Then place the real token in `.streamlit/secrets.toml`:
 
-## 📸 Screenshots
+```toml
+TMDB_BEARER_TOKEN = "your_read_access_token"
+```
 
-| Home Screen | Recommendations |
-|---|---|
-| ![Home](assets/home.png) | ![Results](assets/results.png) |
+### Environment variable
 
-> *Add screenshots to an `assets/` folder in your repo to display them here.*
+```bash
+export TMDB_BEARER_TOKEN="your_read_access_token"
+streamlit run app.py
+```
 
----
+Legacy `TMDB_API_KEY` values are also supported. Both `.streamlit/secrets.toml`
+and `.env` are git-ignored. Never commit a real credential.
 
-## 🤝 Contributing
+For Streamlit Community Cloud, add `TMDB_BEARER_TOKEN` in the app's **Settings →
+Secrets** panel, then reboot the app. GitHub repository secrets are not exposed
+to Streamlit automatically.
 
-Contributions are welcome!
+## Project structure
 
-1. Fork the repository
-2. Create your branch: `git checkout -b feature/your-feature`
-3. Commit your changes: `git commit -m 'Add your feature'`
-4. Push to the branch: `git push origin feature/your-feature`
-5. Open a Pull Request
+```text
+.
+├── .streamlit/
+│   ├── config.toml
+│   └── secrets.toml.example
+├── cinematch/
+│   ├── artwork.py            # Secure poster/backdrop retrieval
+│   ├── catalogue.py          # Loading, cleanup, and full search
+│   ├── presentation.py       # Safe movie-card HTML helpers
+│   ├── recommender.py        # Sparse TF-IDF ranking
+│   └── styles.py             # Responsive visual system
+├── tests/
+│   ├── test_artwork.py
+│   └── test_catalogue.py
+├── app.py                    # Streamlit page composition
+├── movie_list.pkl            # 4,800 processed movie tags
+├── tmdb_5000_movies.csv      # Local ratings and metadata
+├── generate_model.py         # Optional catalogue regeneration utility
+├── requirements.txt
+└── Dockerfile
+```
 
----
+## Tests
 
-## 📄 License
+```bash
+python -m unittest discover -s tests -v
+```
 
-Distributed under the MIT License. See [LICENSE](LICENSE) for details.
+The tests verify the complete catalogue count, title/genre search, stable
+movie-ID selection, 20-result recommendations, and TMDB poster/backdrop fallback
+behavior without making live network calls.
 
----
+## Docker
 
-<div align="center">
+```bash
+docker build -t cinematch .
+docker run --rm -p 8501:8501 cinematch
+```
 
-Made with ❤️ by [Prithvi](https://github.com/prithvicoder1)
+To enable poster artwork in Docker:
 
-⭐ If you found this useful, give it a star — it helps a lot!
+```bash
+docker run --rm -p 8501:8501 \
+  -e TMDB_BEARER_TOKEN="your_read_access_token" \
+  cinematch
+```
 
-</div>
+This product uses the TMDB API but is not endorsed or certified by TMDB.

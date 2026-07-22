@@ -1,70 +1,93 @@
-import numpy as np
-import pandas as pd
+"""Regenerate the tagged movie catalogue from the original TMDB CSV files.
+
+The application builds its sparse TF-IDF matrix at runtime, so this script only
+creates ``movie_list.pkl``. It intentionally avoids generating or committing a
+large dense similarity matrix.
+"""
+
+from __future__ import annotations
+
+import argparse
 import ast
-from sklearn.feature_extraction.text import CountVectorizer
-from sklearn.metrics.pairwise import cosine_similarity
-import pickle
-import os
+from pathlib import Path
+from typing import Any
 
-print("Loading data...")
-movies = pd.read_csv('tmdb_5000_movies.csv')
-credits = pd.read_csv('tmdb_5000_credits.csv') 
+import pandas as pd
 
-print("Merging data...")
-movies = movies.merge(credits, on='title')
-movies = movies[['movie_id', 'title', 'overview', 'genres', 'keywords', 'cast', 'crew']]
 
-movies.dropna(inplace=True)
+def parse_named_items(raw_value: str) -> list[str]:
+    """Extract normalized names from a TMDB JSON-like list."""
+    return [
+        str(item["name"]).replace(" ", "")
+        for item in ast.literal_eval(raw_value)
+        if item.get("name")
+    ]
 
-def convert(text):
-    L = []
-    for i in ast.literal_eval(text):
-        L.append(i['name']) 
-    return L 
 
-print("Processing genres and keywords...")
-movies['genres'] = movies['genres'].apply(convert)
-movies['keywords'] = movies['keywords'].apply(convert)
+def parse_directors(raw_value: str) -> list[str]:
+    """Extract director names from a TMDB crew list."""
+    return [
+        str(item["name"]).replace(" ", "")
+        for item in ast.literal_eval(raw_value)
+        if item.get("job") == "Director" and item.get("name")
+    ]
 
-print("Processing cast and crew...")
-movies['cast'] = movies['cast'].apply(convert)
-movies['cast'] = movies['cast'].apply(lambda x: x[0:3])
 
-def fetch_director(text):
-    L = []
-    for i in ast.literal_eval(text):
-        if i['job'] == 'Director':
-            L.append(i['name'])
-    return L 
+def build_tagged_catalogue(movies_path: Path, credits_path: Path) -> pd.DataFrame:
+    """Combine movie metadata and credits into the app's tagged-data schema."""
+    movies = pd.read_csv(movies_path)
+    credits = pd.read_csv(credits_path)
+    merged = movies.merge(
+        credits,
+        left_on=["id", "title"],
+        right_on=["movie_id", "title"],
+        how="inner",
+        validate="one_to_one",
+    )
 
-movies['crew'] = movies['crew'].apply(fetch_director)
-movies['overview'] = movies['overview'].apply(lambda x: x.split())
+    columns = ["id", "title", "overview", "genres", "keywords", "cast", "crew"]
+    tagged = merged[columns].dropna().copy()
+    tagged["overview"] = tagged["overview"].map(str.split)
+    tagged["genres"] = tagged["genres"].map(parse_named_items)
+    tagged["keywords"] = tagged["keywords"].map(parse_named_items)
+    tagged["cast"] = tagged["cast"].map(parse_named_items).map(lambda names: names[:3])
+    tagged["crew"] = tagged["crew"].map(parse_directors)
 
-def collapse(L):
-    L1 = []
-    for i in L:
-        L1.append(i.replace(" ", ""))
-    return L1
+    feature_columns = ["overview", "genres", "keywords", "cast", "crew"]
+    tagged["tags"] = tagged[feature_columns].apply(
+        lambda row: " ".join(
+            str(token).casefold()
+            for values in row
+            for token in _as_list(values)
+        ),
+        axis=1,
+    )
+    return tagged[["id", "title", "tags"]].drop_duplicates("id").reset_index(drop=True)
 
-movies['cast'] = movies['cast'].apply(collapse)
-movies['crew'] = movies['crew'].apply(collapse)
-movies['genres'] = movies['genres'].apply(collapse)
-movies['keywords'] = movies['keywords'].apply(collapse)
 
-movies['tags'] = movies['overview'] + movies['genres'] + movies['keywords'] + movies['cast'] + movies['crew']
+def _as_list(value: Any) -> list[Any]:
+    return value if isinstance(value, list) else []
 
-new = movies.drop(columns=['overview', 'genres', 'keywords', 'cast', 'crew'])
-new['tags'] = new['tags'].apply(lambda x: " ".join(x))
 
-print("Vectorizing...")
-cv = CountVectorizer(max_features=5000, stop_words='english')
-vector = cv.fit_transform(new['tags']).toarray()
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--movies", type=Path, default=Path("tmdb_5000_movies.csv"))
+    parser.add_argument("--credits", type=Path, default=Path("tmdb_5000_credits.csv"))
+    parser.add_argument("--output", type=Path, default=Path("movie_list.pkl"))
+    return parser.parse_args()
 
-print("Calculating similarity...")
-similarity = cosine_similarity(vector)
 
-print("Exporting to pickle...")
-os.makedirs('model', exist_ok=True)
-pickle.dump(new, open('model/movie_list.pkl', 'wb'))
-pickle.dump(similarity, open('model/similarity.pkl', 'wb'))
-print("Done!")
+def main() -> None:
+    args = parse_args()
+    for source in (args.movies, args.credits):
+        if not source.is_file():
+            raise FileNotFoundError(f"Required dataset not found: {source}")
+
+    catalogue = build_tagged_catalogue(args.movies, args.credits)
+    args.output.parent.mkdir(parents=True, exist_ok=True)
+    catalogue.to_pickle(args.output)
+    print(f"Saved {len(catalogue):,} tagged movies to {args.output}")
+
+
+if __name__ == "__main__":
+    main()
