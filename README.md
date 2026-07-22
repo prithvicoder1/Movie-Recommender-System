@@ -1,50 +1,73 @@
 <div align="center">
 
-# 🎬 CineMatch
+<img src="assets/cinematch-hero.svg" alt="CineMatch — find the movie that fits the mood" width="100%" />
 
-### A polished, story-first movie recommendation experience.
+<br />
 
-[![Python](https://img.shields.io/badge/Python-3.10+-3776AB?style=flat-square&logo=python&logoColor=white)](https://python.org)
-[![Streamlit](https://img.shields.io/badge/Streamlit-1.37+-FF4B4B?style=flat-square&logo=streamlit&logoColor=white)](https://streamlit.io)
-[![scikit-learn](https://img.shields.io/badge/scikit--learn-TF--IDF-F7931E?style=flat-square&logo=scikitlearn&logoColor=white)](https://scikit-learn.org)
-[![TMDB](https://img.shields.io/badge/TMDB-optional_live_artwork-01B4E4?style=flat-square)](https://www.themoviedb.org/)
+[![Open CineMatch](https://img.shields.io/badge/OPEN_CINEMATCH-FF477E?style=for-the-badge&logo=streamlit&logoColor=white)](https://cinematch-preview.jhanupur18.chatgpt.site)
+[![Browse 4,800 Movies](https://img.shields.io/badge/BROWSE-4%2C800_MOVIES-8B5CF6?style=for-the-badge)](#the-experience)
+[![Recommendations](https://img.shields.io/badge/RECOMMENDATIONS-5_TO_20-14B8A6?style=for-the-badge)](#how-cinematch-thinks)
 
-Search the complete bundled catalogue and get 5–20 recommendations that share
-a movie's themes, genres, cast, and creative DNA. The recommendation engine runs
-locally; TMDB credentials securely enable live posters and wide hero banners.
+### A cinematic, story-first movie discovery experience.
+
+Search the complete catalogue by title, genre, or story. Pick a film you love, and CineMatch finds the movies that share its creative DNA.
 
 </div>
 
-## What changed
+---
 
-- Full-catalogue search across 4,800 unique movies by title, original title,
-  genre, and story metadata—no small curated search subset.
-- Adjustable recommendation depth: 5, 10, 15, or 20 ranked movies.
-- A cinematic, responsive interface with quick picks, detailed ratings,
-  high-resolution poster cards, and a backdrop-style selected-movie banner.
-- A self-contained TF-IDF recommendation index built from the included data, so
-  the project no longer depends on a missing `similarity.pkl` file.
-- Secure TMDB configuration through Streamlit secrets or environment variables.
-  No API key is stored in the repository.
-- TMDB ID lookup plus a title/year recovery lookup when older records lack art.
-- A graceful local mode with generated title art when TMDB is not configured.
-- Cached, concurrent artwork requests for fast repeat interactions.
-- Separated catalogue, recommendation, artwork, presentation, and styling
-  modules with regression tests for the core behavior.
+## The experience
 
-## How it works
+<table>
+  <tr>
+    <td width="33%" valign="top">
+      <h3>🔎 Search every story</h3>
+      <p>Explore all <strong>4,800 unique movies</strong> by title, original title, genre, keywords, or overview—not a small curated subset.</p>
+    </td>
+    <td width="33%" valign="top">
+      <h3>✦ Match the mood</h3>
+      <p>Choose <strong>5, 10, 15, or 20</strong> ranked recommendations based on themes, cast, crew, genres, and story similarity.</p>
+    </td>
+    <td width="33%" valign="top">
+      <h3>🎞️ See the cinema</h3>
+      <p>Rich selected-movie banners, high-resolution poster cards, ratings, runtime, genres, match scores, and resilient local artwork.</p>
+    </td>
+  </tr>
+</table>
 
-1. The app loads 4,800 unique tagged movies from `movie_list.pkl`.
-2. The search service ranks matches from the complete local catalogue.
-3. `TfidfVectorizer` converts movie tags into a sparse feature matrix.
-4. A query-time cosine comparison ranks up to 20 closest titles.
-5. Local CSV metadata supplies year, runtime, rating, genres, and overview.
-6. If configured, TMDB supplies live posters and wide backdrops.
+<div align="center">
 
-This keeps startup lightweight and avoids committing a large dense similarity
-matrix to Git.
+| 4,800 | 5–20 | 100% local engine | Optional TMDB art |
+|:---:|:---:|:---:|:---:|
+| searchable movies | recommendations | no watch history | posters + backdrops |
 
-## Run locally
+</div>
+
+## How CineMatch thinks
+
+```mermaid
+flowchart LR
+    A[Search a movie] --> B[Build its content profile]
+    B --> C[TF-IDF feature space]
+    C --> D[Cosine similarity]
+    D --> E[Rank 5–20 matches]
+    E --> F[Add details and artwork]
+```
+
+The recommendation engine builds a sparse TF-IDF index from each movie's overview, genres, keywords, cast, and director. Similarity is calculated only when you search, avoiding a large committed `similarity.pkl` while keeping the bundled catalogue fully usable offline.
+
+## Built for movie night
+
+- **Complete discovery** — title, original-title, genre, keyword, and story search.
+- **Cinematic selection banner** — year, rating, runtime, genre chips, tagline, and overview.
+- **Ranked poster grid** — clear match percentage and movie metadata on every result.
+- **Smart artwork recovery** — TMDB ID lookup followed by title/year fallback.
+- **Graceful local mode** — attractive deterministic title art when no TMDB token is set.
+- **Fast repeat browsing** — sparse vectors, cached data, and concurrent artwork requests.
+- **Responsive UI** — polished layouts for desktop, tablet, and mobile.
+- **Secure by design** — credentials stay in Streamlit secrets or environment variables.
+
+## Run it locally
 
 ```bash
 git clone https://github.com/prithvicoder1/Movie-Recommender-System.git
@@ -53,87 +76,78 @@ cd Movie-Recommender-System
 python -m venv .venv
 source .venv/bin/activate            # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
-
 streamlit run app.py
 ```
 
-Open [http://localhost:8501](http://localhost:8501). Search and recommendations
-work immediately without an external API; local title artwork is used until a
-TMDB credential is configured.
+Open **http://localhost:8501**. Search and recommendations work immediately—no external API is required.
 
-## Enable TMDB artwork securely
+## Enable cinematic artwork
 
-Create a free API credential from [TMDB account settings](https://www.themoviedb.org/settings/api).
-The read access token is preferred over embedding a v3 key in a request URL.
-
-### Streamlit secrets
+Create a free credential in [TMDB account settings](https://www.themoviedb.org/settings/api), then copy the safe example file:
 
 ```bash
 cp .streamlit/secrets.toml.example .streamlit/secrets.toml
 ```
 
-Then place the real token in `.streamlit/secrets.toml`:
+Add your read-access token to the untracked secrets file:
 
 ```toml
 TMDB_BEARER_TOKEN = "your_read_access_token"
 ```
 
-### Environment variable
+You can also use an environment variable:
 
 ```bash
 export TMDB_BEARER_TOKEN="your_read_access_token"
 streamlit run app.py
 ```
 
-Legacy `TMDB_API_KEY` values are also supported. Both `.streamlit/secrets.toml`
-and `.env` are git-ignored. Never commit a real credential.
+> [!IMPORTANT]
+> Never commit a real TMDB credential. `.streamlit/secrets.toml` and `.env` are already ignored. For Streamlit Community Cloud, add `TMDB_BEARER_TOKEN` under **Settings → Secrets** and reboot the app.
 
-For Streamlit Community Cloud, add `TMDB_BEARER_TOKEN` in the app's **Settings →
-Secrets** panel, then reboot the app. GitHub repository secrets are not exposed
-to Streamlit automatically.
-
-## Project structure
+## Inside the project
 
 ```text
-.
+Movie-Recommender-System/
 ├── .streamlit/
-│   ├── config.toml
-│   └── secrets.toml.example
+│   ├── config.toml                 # CineMatch dark theme
+│   └── secrets.toml.example        # Safe credential template
+├── assets/
+│   └── cinematch-hero.svg          # README product artwork
 ├── cinematch/
-│   ├── artwork.py            # Secure poster/backdrop retrieval
-│   ├── catalogue.py          # Loading, cleanup, and full search
-│   ├── presentation.py       # Safe movie-card HTML helpers
-│   ├── recommender.py        # Sparse TF-IDF ranking
-│   └── styles.py             # Responsive visual system
+│   ├── artwork.py                  # Posters, backdrops, and fallbacks
+│   ├── catalogue.py                # Catalogue loading and full search
+│   ├── presentation.py             # Safe movie-card presentation
+│   ├── recommender.py              # Sparse TF-IDF ranking
+│   └── styles.py                   # Responsive visual system
 ├── tests/
 │   ├── test_artwork.py
 │   └── test_catalogue.py
-├── app.py                    # Streamlit page composition
-├── movie_list.pkl            # 4,800 processed movie tags
-├── tmdb_5000_movies.csv      # Local ratings and metadata
-├── generate_model.py         # Optional catalogue regeneration utility
+├── app.py                          # Streamlit page composition
+├── movie_list.pkl                  # 4,800 processed movie profiles
+├── tmdb_5000_movies.csv            # Local ratings and metadata
+├── generate_model.py               # Optional catalogue regeneration
 ├── requirements.txt
 └── Dockerfile
 ```
 
-## Tests
+## Quality checks
 
 ```bash
 python -m unittest discover -s tests -v
 ```
 
-The tests verify the complete catalogue count, title/genre search, stable
-movie-ID selection, 20-result recommendations, and TMDB poster/backdrop fallback
-behavior without making live network calls.
+The regression suite covers the 4,800-title catalogue, full search behavior, stable movie selection, 20-result recommendation depth, and poster/backdrop fallback logic without live network requests.
 
-## Docker
+<details>
+<summary><strong>Run with Docker</strong></summary>
 
 ```bash
 docker build -t cinematch .
 docker run --rm -p 8501:8501 cinematch
 ```
 
-To enable poster artwork in Docker:
+With TMDB artwork enabled:
 
 ```bash
 docker run --rm -p 8501:8501 \
@@ -141,4 +155,20 @@ docker run --rm -p 8501:8501 \
   cinematch
 ```
 
-This product uses the TMDB API but is not endorsed or certified by TMDB.
+</details>
+
+---
+
+<div align="center">
+
+### Built for curious movie nights.
+
+[**Open the live experience →**](https://cinematch-preview.jhanupur18.chatgpt.site)
+
+<sub>Python · Streamlit · pandas · scikit-learn · TMDB</sub>
+
+<br /><br />
+
+<sub>This product uses the TMDB API but is not endorsed or certified by TMDB.</sub>
+
+</div>
